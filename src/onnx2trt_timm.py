@@ -30,10 +30,10 @@ if __name__ == "__main__":
     )
     trt_path.parent.mkdir(parents=True, exist_ok=True)
     if not onnx_path.is_file():
-        raise Exception(f"File Not Found. {onnx_path}")
+        raise Exception(f"File Not Found. {str(onnx_path)}")
 
     # build engine
-    engine = build_engine(onnx_path=onnx_path, is_fp16=args.fp16)
+    engine = build_engine(onnx_path=onnx_path, fp16=args.fp16)
     # write engine file
     with open(str(trt_path), "wb") as f:
         f.write(bytearray(engine.serialize()))

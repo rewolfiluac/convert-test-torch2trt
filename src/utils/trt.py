@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
 import numpy as np
 import pycuda.autoinit
@@ -26,14 +26,14 @@ class HostDeviceMem(object):
         return self.__str__()
 
 
-def build_engine(onnx_path: Path, is_fp16: bool = False) -> Any:
+def build_engine(onnx_path: Path, fp16: bool = False) -> Any:
     builder = trt.Builder(TRT_LOGGER)
     network = builder.create_network(EXPLICIT_BATCH)
     config = builder.create_builder_config()
     parser = trt.OnnxParser(network, TRT_LOGGER)
 
     config.max_workspace_size = GiB(1)
-    if is_fp16:
+    if fp16:
         config.set_flag(trt.BuilderFlag.FP16)
     with open(onnx_path, "rb") as model:
         if not parser.parse(model.read()):
@@ -41,3 +41,48 @@ def build_engine(onnx_path: Path, is_fp16: bool = False) -> Any:
                 print(parser.get_geterror(error))
             return None
     return builder.build_engine(network, config)
+
+
+def load_engine(engine_path: Path) -> Any:
+    runtime = trt.Runtime(TRT_LOGGER)
+    with open(str(engine_path), "rb") as f:
+        engine_byte = f.read()
+    return runtime.deserialize_cuda_engine(engine_byte)
+
+
+def allocate_buffers(engine: Any) -> Any:
+    inputs = []
+    outputs = []
+    bindings = []
+    stream = cuda.Stream()
+    for binding in engine:
+        size = trt.volume(engine.get_binding_shape(binding)) * engine.max_batch_size
+        dtype = trt.nptype(engine.get_binding_dtype(binding))
+        # Allocate host and device buffers
+        host_mem = cuda.pagelocked_empty(size, dtype)
+        device_mem = cuda.mem_alloc(host_mem.nbytes)
+        # Append the device buffer to device bindings.
+        bindings.append(int(device_mem))
+        # Append to the appropriate list.
+        if engine.binding_is_input(binding):
+            inputs.append(HostDeviceMem(host_mem, device_mem))
+        else:
+            outputs.append(HostDeviceMem(host_mem, device_mem))
+    return inputs, outputs, bindings, stream
+
+
+def load_data(data: np.ndarray, pagelocked_buffer: np.ndarray) -> None:
+    np.copyto(pagelocked_buffer, data)
+
+
+def do_inference_v2(context, bindings, inputs, outputs, stream):
+    # Transfer input data to the GPU.
+    [cuda.memcpy_htod_async(inp.device, inp.host, stream) for inp in inputs]
+    # Run inference.
+    context.execute_async_v2(bindings=bindings, stream_handle=stream.handle)
+    # Transfer predictions back from the GPU.
+    [cuda.memcpy_dtoh_async(out.host, out.device, stream) for out in outputs]
+    # Synchronize the stream
+    stream.synchronize()
+    # Return only the host outputs.
+    return [out.host for out in outputs]

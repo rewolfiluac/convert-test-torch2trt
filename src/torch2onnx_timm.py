@@ -35,10 +35,10 @@ def get_dummy_input(
     width_size: int,
 ) -> torch.Tensor:
     input_shape_size = (
-        args.input_batch,
-        args.input_color,
-        args.input_height,
-        args.input_width,
+        batch_size,
+        color_size,
+        hetigh_size,
+        width_size,
     )
     return torch.randn(*input_shape_size, requires_grad=True)
 
@@ -64,10 +64,6 @@ def torch2onnx(
         do_constant_folding=True,  # whether to execute constant folding for optimization
         input_names=["input"],  # the model's input names
         output_names=["output"],  # the model's output names
-        # dynamic_axes={
-        #     "input": {0: "batch_size"},  # variable length axes
-        #     "output": {0: "batch_size"},
-        # },
     )
 
 
