@@ -1,5 +1,9 @@
 .env
+.mypy_cache
 
 # generate file
 model_list
 onnx
+
+# python
+*.pyc
