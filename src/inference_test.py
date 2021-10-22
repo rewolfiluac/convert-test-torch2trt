@@ -1,8 +1,10 @@
 import argparse
 from pathlib import Path
 import time
+from typing import List
 
 import numpy as np
+import cv2
 
 from utils.util import fix_seed
 from utils.trt import (
@@ -11,11 +13,15 @@ from utils.trt import (
     do_inference_v2,
     load_data,
 )
+from consts.imagenet_labels import IMAGENET_LABELS
+
+IMAGE_DIR = "../images"
 
 
 def get_argparser() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--engine-path", type=str)
+    parser.add_argument("--engine-path", type=str, required=True)
+    parser.add_argument("--image-path", type=str, required=True)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     return args
@@ -38,6 +44,12 @@ def get_dummy_input(
 
 
 def preprocess(input_data: np.ndarray) -> np.ndarray:
+    input_data = cv2.resize(input_data, (224, 224))
+    # imagenet color RGB, not BGR.
+    input_data = input_data[:, :, ::-1]
+    # (h, w, c) to (c, h, w)
+    input_data = input_data.transpose((2, 0, 1))
+    input_data = np.expand_dims(input_data, 0)
     input_data = input_data.astype(np.float32)
     input_data = input_data / 255
     input_data[:, 0, :, :] = (input_data[:, 0, :, :] - 0.485) / 0.229
@@ -50,6 +62,7 @@ if __name__ == "__main__":
     args = get_argparser()
     fix_seed(args.seed)
     engine_path = Path(args.engine_path)
+    img_path = Path(args.image_path)
     if not engine_path.is_file():
         raise Exception(f"File Not Found. {str(engine_path)}")
 
@@ -57,8 +70,8 @@ if __name__ == "__main__":
     context = engine.create_execution_context()
     inputs, outputs, bindings, stream = allocate_buffers(engine)
 
-    input_data = get_dummy_input(1, 3, 224, 224)
-    input_data = preprocess(input_data)
+    img = cv2.imread(str(img_path))
+    input_data = preprocess(img)
 
     start = time.time()
     load_data(input_data, inputs[0].host)
@@ -71,6 +84,6 @@ if __name__ == "__main__":
         stream=stream,
     )
     res_cls = res_prob[0].reshape((1, 1000)).argmax()
-    print(f"inference: {time.time() - start} [sec]")
+    print(f"inference time: {time.time() - start} [sec]")
 
-    print(res_cls)
+    print(f"pred: {IMAGENET_LABELS[res_cls]}")

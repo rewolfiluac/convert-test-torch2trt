@@ -21,5 +21,5 @@ python onnx2trt_timm.py --onnx-path {your/model/path}
 
 ## inference test
 ```
-python inference_test.py --engine-path {your/engine/path}
+python inference_test.py --engine-path {your/engine/path} --image-path {your/image/path}
 ```
