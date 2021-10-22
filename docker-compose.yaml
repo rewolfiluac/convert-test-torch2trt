@@ -13,7 +13,7 @@ services:
     runtime: nvidia
     environment:
       NVIDIA_VISIBLE_DEVICES: all
-    shm_size: "2gb"
+    shm_size: "4gb"
     tty: true
     volumes:
       - .:/home/dev/convert-test-torch2trt

@@ -18,3 +18,8 @@ bash export_model_list_timm.sh
 python torch2onnx_timm.py --model-name {model_name}
 python onnx2trt_timm.py --onnx-path {your/model/path}
 ```
+
+## inference test
+```
+python inference_test.py --engine-path {your/engine/path}
+```
