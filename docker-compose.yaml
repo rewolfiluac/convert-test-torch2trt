@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  develop:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+    shm_size: "2gb"
+    tty: true
+    volumes:
+      - .:/home/dev/convert-test-torch2trt
+      - ~/.ssh:/home/dev/.ssh
