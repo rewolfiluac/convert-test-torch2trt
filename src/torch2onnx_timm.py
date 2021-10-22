@@ -8,7 +8,8 @@ import onnx
 
 from utils import log
 
-OUT_DIR_PATH = "../onnx"
+
+OUT_DIR_PATH = "../onnx_model"
 
 
 def get_argparser() -> argparse.Namespace:
@@ -19,10 +20,27 @@ def get_argparser() -> argparse.Namespace:
     parser.add_argument("--input-height", type=int, default=224)
     parser.add_argument("--input-width", type=int, default=224)
     parser.add_argument(
-        "--show-model-list", help="show model list.", action="store_true"
+        "--show-model-list",
+        help="show model list.",
+        action="store_true",
     )
     args = parser.parse_args()
     return args
+
+
+def get_dummy_input(
+    batch_size: int,
+    color_size: int,
+    hetigh_size: int,
+    width_size: int,
+) -> torch.Tensor:
+    input_shape_size = (
+        args.input_batch,
+        args.input_color,
+        args.input_height,
+        args.input_width,
+    )
+    return torch.randn(*input_shape_size, requires_grad=True)
 
 
 def show_model_list() -> None:
@@ -63,17 +81,13 @@ if __name__ == "__main__":
     args = get_argparser()
     if args.show_model_list:
         show_model_list()
+        exit()
     else:
         out_p = Path(OUT_DIR_PATH) / f"{args.model_name}.onnx"
         out_p.parent.mkdir(parents=True, exist_ok=True)
-        input_shape_size = (
-            args.input_batch,
-            args.input_color,
-            args.input_height,
-            args.input_width,
+        dummy_input = get_dummy_input(
+            args.input_batch, args.input_color, args.input_height, args.input_width
         )
-        dummy_input = torch.randn(*input_shape_size, requires_grad=True)
-
         model = timm.create_model(args.model_name, pretrained=True)
         torch2onnx(
             model=model,
@@ -81,3 +95,4 @@ if __name__ == "__main__":
             output_path=out_p,
         )
         check_onnx(out_p)
+        exit()

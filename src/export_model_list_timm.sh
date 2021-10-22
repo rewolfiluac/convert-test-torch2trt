@@ -1,1 +1,1 @@
-python timm2onnx.py --model-list > ../model_list
+python torch2onnx_timm.py --model-list > ../model_list
