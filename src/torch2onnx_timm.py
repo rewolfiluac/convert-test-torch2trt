@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 from typing import Tuple
+import logging
 
 import timm
 import torch
@@ -14,7 +15,7 @@ OUT_DIR_PATH = "../onnx_model"
 
 def get_argparser() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-name", type=str)
+    parser.add_argument("--model-name", type=str, required=True)
     parser.add_argument("--input-batch", type=int, default=1)
     parser.add_argument("--input-color", type=int, default=3)
     parser.add_argument("--input-height", type=int, default=224)
@@ -75,6 +76,9 @@ def check_onnx(onnx_path: Path) -> None:
 
 if __name__ == "__main__":
     args = get_argparser()
+    log.load_config()
+    logging.info(f"Start Convert - Model Name : {args.model_name}")
+
     if args.show_model_list:
         show_model_list()
         exit()

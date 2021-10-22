@@ -2,10 +2,12 @@ import argparse
 from pathlib import Path
 import time
 from typing import List
+import logging
 
 import numpy as np
 import cv2
 
+from utils import log
 from utils.util import fix_seed
 from utils.trt import (
     load_engine,
@@ -60,6 +62,8 @@ def preprocess(input_data: np.ndarray) -> np.ndarray:
 
 if __name__ == "__main__":
     args = get_argparser()
+    log.load_config()
+
     fix_seed(args.seed)
     engine_path = Path(args.engine_path)
     img_path = Path(args.image_path)
@@ -84,6 +88,6 @@ if __name__ == "__main__":
         stream=stream,
     )
     res_cls = res_prob[0].reshape((1, 1000)).argmax()
-    print(f"inference time: {time.time() - start} [sec]")
+    logging.info(f"inference time: {time.time() - start} [sec]")
 
-    print(f"pred: {IMAGENET_LABELS[res_cls]}")
+    logging.info(f"pred: {IMAGENET_LABELS[res_cls]}")

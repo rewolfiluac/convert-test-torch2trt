@@ -76,7 +76,13 @@ def load_data(data: np.ndarray, pagelocked_buffer: np.ndarray) -> None:
     np.copyto(pagelocked_buffer, data)
 
 
-def do_inference_v2(context, bindings, inputs, outputs, stream):
+def do_inference_v2(
+    context: Any,
+    bindings: Any,
+    inputs: Any,
+    outputs: Any,
+    stream: Any,
+) -> List[Any]:
     # Transfer input data to the GPU.
     [cuda.memcpy_htod_async(inp.device, inp.host, stream) for inp in inputs]
     # Run inference.

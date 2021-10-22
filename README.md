@@ -1,13 +1,12 @@
 # convert-test-torch2trt
 
-
-## Startup Docker Containers
+## Startup docker container
 ```
 bash make_env.sh
 docker-compose up -d --build 
 ```
 
-## output model list 
+## show timm model list 
 ```bash
 cd src
 bash export_model_list_timm.sh
@@ -15,7 +14,9 @@ bash export_model_list_timm.sh
 
 ## torch2trt
 ```bash
+# torch2onnx
 python torch2onnx_timm.py --model-name {model_name}
+# onnx2trt
 python onnx2trt_timm.py --onnx-path {your/model/path}
 ```
 
