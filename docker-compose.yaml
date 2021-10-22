@@ -1,6 +1,7 @@
 version: "3.7"
 services:
   develop:
+    container_name: torch2trt-test
     env_file:
       - .env
     build:
@@ -16,4 +17,3 @@ services:
     tty: true
     volumes:
       - .:/home/dev/convert-test-torch2trt
-      - ~/.ssh:/home/dev/.ssh
