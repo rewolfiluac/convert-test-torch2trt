@@ -1,2 +1,5 @@
 .env
 
+# generate file
+model_list
+onnx
