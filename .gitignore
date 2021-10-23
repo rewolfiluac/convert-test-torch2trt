@@ -4,10 +4,12 @@ __pycache__
 
 # generate file
 model_list
+*.onnx
+*.engine
 
 # generate folder
-onnx_model
 trt_engine
+images_out
 
 # python
 *.pyc

@@ -17,10 +17,13 @@ bash export_model_list_timm.sh
 # torch2onnx
 python torch2onnx_timm.py --model-name {model_name}
 # onnx2trt
-python onnx2trt_timm.py --onnx-path {your/model/path}
+python onnx2trt.py --onnx-path {your/onnx/path}
 ```
 
-## inference test
-```
+## inference engine
+```bash
+# timm
 python inference_timm.py --engine-path {your/engine/path} --image-path {your/image/path}
+# u^2-net
+python inference_u2net.py --engine-path {your/engine/path} --image-path {your/image/path}
 ```
