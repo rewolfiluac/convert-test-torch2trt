@@ -39,7 +39,7 @@ def build_engine(onnx_path: Path, fp16: bool = False) -> Any:
                     with open(onnx_path, "rb") as model:
                         if not parser.parse(model.read()):
                             for error in range(parser.num_errors):
-                                print(parser.get_geterror(error))
+                                print(parser.get_error(error))
                             return None
                     return builder.build_engine(network, config)
 
