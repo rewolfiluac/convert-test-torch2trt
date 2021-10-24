@@ -6,6 +6,7 @@ ARG GID
 # install python package
 RUN pip install --upgrade pip && \
     pip install --upgrade pyyaml==6.0 types-PyYAML==5.4.12 && \
+    pip install --upgrade hydra-core==1.1.1 && \
     pip install --upgrade opencv_python==4.5.4.58 && \
     pip install --upgrade opencv_python_headless==4.5.4.58 && \
     pip install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html && \

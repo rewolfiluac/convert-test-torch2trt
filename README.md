@@ -12,18 +12,34 @@ cd src
 bash export_model_list_timm.sh
 ```
 
-## torch2trt
+## torch2trt from timm model
 ```bash
-# torch2onnx
 python torch2onnx_timm.py --model-name {model_name}
-# onnx2trt
-python onnx2trt.py --onnx-path {your/onnx/path}
 ```
 
-## inference engine
+## download u2net onnx model
 ```bash
-# timm
-python inference_timm.py --engine-path {your/engine/path} --image-path {your/image/path}
-# u^2-net
-python inference_u2net.py --engine-path {your/engine/path} --image-path {your/image/path}
+
+```
+
+## onnx2trt
+```bash
+python onnx2trt.py --onnx-path {your/onnx/path} {option: --fp16}
+```
+
+## inference demo imagenet
+```bash
+# timm model
+python inference_timm.py
+# timm model
+python inference_timm.py general.image_path={your/image/path}
+```
+## inference demo u2net
+```bash
+# u^2-net for portrait
+python inference_u2net.py
+# (option) u^2-net for salient object detection
+python inference_u2net.py u2net=salient
+# u^2-net inference your image
+python inference_u2net.py general.image_path={your/image/path}
 ```

@@ -1,12 +1,14 @@
-import argparse
 from pathlib import Path
 import time
 from typing import List, Any, Tuple
 import logging
 
+import hydra
+from omegaconf import DictConfig, OmegaConf
 import numpy as np
 import cv2
 
+from img_proc.np import preprocess
 from utils import log
 from utils.util import fix_seed
 from utils.trt import (
@@ -20,46 +22,6 @@ from consts.imagenet_labels import IMAGENET_LABELS
 OUTPUT_DIR = "../images_out"
 
 
-def get_argparser() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--engine-path", type=str, required=True)
-    parser.add_argument("--image-path", type=str, required=True)
-    parser.add_argument("--seed", type=int, default=0)
-    args = parser.parse_args()
-    return args
-
-
-def get_dummy_input(
-    batch_size: int,
-    color_size: int,
-    hetigh_size: int,
-    width_size: int,
-) -> np.ndarray:
-    input_shape_size = (
-        batch_size,
-        color_size,
-        hetigh_size,
-        width_size,
-    )
-    input_data = np.random.randint(0, 255, input_shape_size)
-    return input_data
-
-
-def preprocess(input_data: np.ndarray) -> np.ndarray:
-    input_data = cv2.resize(input_data, (320, 320))
-    # imagenet color RGB, not BGR.
-    input_data = input_data[:, :, ::-1]
-    # (h, w, c) to (c, h, w)
-    input_data = input_data.transpose((2, 0, 1))
-    input_data = np.expand_dims(input_data, 0)
-    input_data = input_data.astype(np.float32)
-    input_data = input_data / np.max(input_data)
-    input_data[:, 0, :, :] = (input_data[:, 0, :, :] - 0.485) / 0.229
-    input_data[:, 1, :, :] = (input_data[:, 1, :, :] - 0.456) / 0.224
-    input_data[:, 2, :, :] = (input_data[:, 2, :, :] - 0.406) / 0.225
-    return input_data.ravel()
-
-
 def normPRED(d: np.ndarray) -> np.ndarray:
     ma = np.max(d)
     mi = np.min(d)
@@ -69,40 +31,27 @@ def normPRED(d: np.ndarray) -> np.ndarray:
 
 def postprocess(
     res: List[np.ndarray],
-    out_width: int,
-    out_height: int,
+    input_shape: Tuple[int, int],
+    resize_shape: Tuple[int, int],
+    is_portrait: bool = False,
 ) -> np.ndarray:
-    pred = res[0].reshape((1, 320, 320))
+    pred = res[0].reshape((1, *input_shape))
+    if is_portrait:
+        pred = 1.0 - pred
     pred = normPRED(pred) * 255
     pred = pred.transpose((1, 2, 0)).astype(np.uint8)
-    out_img = cv2.resize(pred, (out_width, out_height))
+    out_img = cv2.resize(pred, resize_shape)
     return out_img
 
 
-def predict(
-    context: Any,
-    bindings: Any,
-    inputs: Any,
-    outputs: Any,
-    stream: Any,
-) -> List[np.ndarray]:
-    res = do_inference_v2(
-        context=context,
-        bindings=bindings,
-        inputs=inputs,
-        outputs=outputs,
-        stream=stream,
-    )
-    return res
-
-
-if __name__ == "__main__":
-    args = get_argparser()
+@hydra.main(config_path="../configs", config_name="u2net")
+def main(cfg: DictConfig) -> None:
     log.load_config()
 
-    fix_seed(args.seed)
-    engine_path = Path(args.engine_path)
-    img_path = Path(args.image_path)
+    fix_seed(cfg.general.seed)
+    is_portrait = True if cfg.u2net.mode == "portrait" else False
+    engine_path = Path(cfg.u2net.engine_path)
+    img_path = Path(cfg.general.image_path)
     out_dir_path = Path(OUTPUT_DIR)
     out_dir_path.mkdir(parents=True, exist_ok=True)
     if not engine_path.is_file():
@@ -113,11 +62,15 @@ if __name__ == "__main__":
     inputs, outputs, bindings, stream = allocate_buffers(engine)
 
     img = cv2.imread(str(img_path))
-    input_data = preprocess(img)
+    input_data = preprocess(
+        img,
+        cfg.u2net.input_shape,
+        devide_max=True,
+    )
     # 1st inference
     start = time.time()
     load_data(input_data, inputs[0].host)
-    _ = predict(
+    _ = do_inference_v2(
         context=context,
         bindings=bindings,
         inputs=inputs,
@@ -136,8 +89,17 @@ if __name__ == "__main__":
         outputs=outputs,
         stream=stream,
     )
-    out_img = postprocess(res, img.shape[1], img.shape[0])
+    out_img = postprocess(
+        res,
+        input_shape=cfg.u2net.input_shape,
+        resize_shape=(img.shape[1], img.shape[0]),
+        is_portrait=is_portrait,
+    )
     logging.info(f"2nd inference time: {time.time() - start} [sec]")
 
     # save image
     cv2.imwrite(str(out_dir_path / img_path.name), out_img)
+
+
+if __name__ == "__main__":
+    main()

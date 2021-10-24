@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+  - hydra: default
+  - timm: resnet18
+  - override hydra/hydra_logging: none
+
+general:
+  seed: 0
+  image_path: ../images/bird.jpg

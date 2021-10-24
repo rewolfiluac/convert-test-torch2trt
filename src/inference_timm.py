@@ -4,9 +4,12 @@ import time
 from typing import List
 import logging
 
+import hydra
+from omegaconf import DictConfig, OmegaConf
 import numpy as np
 import cv2
 
+from img_proc.np import preprocess
 from utils import log
 from utils.util import fix_seed
 from utils.trt import (
@@ -17,56 +20,14 @@ from utils.trt import (
 )
 from consts.imagenet_labels import IMAGENET_LABELS
 
-IMAGE_DIR = "../images"
 
-
-def get_argparser() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--engine-path", type=str, required=True)
-    parser.add_argument("--image-path", type=str, required=True)
-    parser.add_argument("--seed", type=int, default=0)
-    args = parser.parse_args()
-    return args
-
-
-def get_dummy_input(
-    batch_size: int,
-    color_size: int,
-    hetigh_size: int,
-    width_size: int,
-) -> np.ndarray:
-    input_shape_size = (
-        batch_size,
-        color_size,
-        hetigh_size,
-        width_size,
-    )
-    input_data = np.random.randint(0, 255, input_shape_size)
-    return input_data
-
-
-def preprocess(input_data: np.ndarray) -> np.ndarray:
-    input_data = cv2.resize(input_data, (224, 224))
-    # imagenet color RGB, not BGR.
-    input_data = input_data[:, :, ::-1]
-    # (h, w, c) to (c, h, w)
-    input_data = input_data.transpose((2, 0, 1))
-    input_data = np.expand_dims(input_data, 0)
-    input_data = input_data.astype(np.float32)
-    input_data = input_data / 255
-    input_data[:, 0, :, :] = (input_data[:, 0, :, :] - 0.485) / 0.229
-    input_data[:, 1, :, :] = (input_data[:, 1, :, :] - 0.456) / 0.224
-    input_data[:, 2, :, :] = (input_data[:, 2, :, :] - 0.406) / 0.225
-    return input_data.ravel()
-
-
-if __name__ == "__main__":
-    args = get_argparser()
+@hydra.main(config_path="../configs", config_name="timm")
+def main(cfg: DictConfig) -> None:
     log.load_config()
 
-    fix_seed(args.seed)
-    engine_path = Path(args.engine_path)
-    img_path = Path(args.image_path)
+    fix_seed(cfg.general.seed)
+    engine_path = Path(cfg.timm.engine_path)
+    img_path = Path(cfg.general.image_path)
     if not engine_path.is_file():
         raise Exception(f"File Not Found. {str(engine_path)}")
 
@@ -75,7 +36,10 @@ if __name__ == "__main__":
     inputs, outputs, bindings, stream = allocate_buffers(engine)
 
     img = cv2.imread(str(img_path))
-    input_data = preprocess(img)
+    input_data = preprocess(
+        img,
+        resize_shape=cfg.timm.input_shape,
+    )
 
     # 1st inference
     start = time.time()
@@ -88,7 +52,7 @@ if __name__ == "__main__":
         outputs=outputs,
         stream=stream,
     )
-    res_cls = res_prob[0].reshape((1, 1000)).argmax()
+    res_cls = res_prob[0].reshape((1, cfg.timm.classes_num)).argmax()
     logging.info(f"1st inference time: {time.time() - start} [sec]")
 
     # 2nd inference
@@ -102,7 +66,13 @@ if __name__ == "__main__":
         outputs=outputs,
         stream=stream,
     )
-    res_cls = res_prob[0].reshape((1, 1000)).argmax()
+    res_cls = res_prob[0].reshape((1, cfg.timm.classes_num)).argmax()
     logging.info(f"2nd inference time: {time.time() - start} [sec]")
 
     logging.info(f"pred: {IMAGENET_LABELS[res_cls]}")
+
+    del context, bindings, inputs, outputs, stream
+
+
+if __name__ == "__main__":
+    main()
