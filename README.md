@@ -29,9 +29,8 @@ python onnx2trt.py --onnx-path {your/onnx/path} {option: --fp16}
 
 ## inference demo imagenet
 ```bash
-# timm model
 python inference_timm.py
-# timm model
+# inference your image
 python inference_timm.py general.image_path={your/image/path}
 ```
 ## inference demo u2net
