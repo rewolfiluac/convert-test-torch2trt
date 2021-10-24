@@ -5,6 +5,7 @@ tmp
 
 # generate file
 model_list
+*.log
 *.onnx
 *.engine
 
