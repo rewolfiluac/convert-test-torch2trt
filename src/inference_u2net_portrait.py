@@ -34,7 +34,7 @@ def mask_portrait(
     return res_img.astype(np.uint8)
 
 
-def process(img: np.ndarray) -> np.ndarray:
+def norm_hist(img: np.ndarray) -> np.ndarray:
     # histgram normalization
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     lab_planes = list(cv2.split(lab))
@@ -124,10 +124,13 @@ def main(cfg: DictConfig) -> None:
         resize_shape=(img.shape[1], img.shape[0]),
     )
 
-    img = process(img)
+    if cfg.general.norm_hist:
+        img = norm_hist(img)
+
     masked_img = mask_portrait(img, mask_img)
 
-    cv2.imwrite(str(out_dir_path / "masked.jpg"), masked_img)
+    if cfg.general.save_masked_img:
+        cv2.imwrite(str(out_dir_path / "masked.jpg"), masked_img)
 
     # 2nd inference
     input_data = preprocess(

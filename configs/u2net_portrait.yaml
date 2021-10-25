@@ -8,3 +8,5 @@ defaults:
 general:
   seed: 0
   image_path: ../images/bird.jpg
+  norm_hist: True
+  save_masked_img: False

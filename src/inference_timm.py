@@ -10,7 +10,6 @@ import numpy as np
 import cv2
 
 from img_proc.np import preprocess
-from utils import log
 from utils.util import fix_seed
 from utils.trt import (
     load_engine,
@@ -23,8 +22,6 @@ from consts.imagenet_labels import IMAGENET_LABELS
 
 @hydra.main(config_path="../configs", config_name="timm")
 def main(cfg: DictConfig) -> None:
-    log.load_config()
-
     fix_seed(cfg.general.seed)
     engine_path = Path(cfg.timm.engine_path)
     img_path = Path(cfg.general.image_path)

@@ -1,8 +1,9 @@
-import argparse
 from pathlib import Path
 from typing import Tuple
 import logging
 
+import hydra
+from omegaconf import DictConfig, OmegaConf
 import timm
 import torch
 import onnx
@@ -11,22 +12,6 @@ from utils import log
 
 
 OUT_DIR_PATH = "../onnx_model"
-
-
-def get_argparser() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model-name", type=str, required=True)
-    parser.add_argument("--input-batch", type=int, default=1)
-    parser.add_argument("--input-color", type=int, default=3)
-    parser.add_argument("--input-height", type=int, default=224)
-    parser.add_argument("--input-width", type=int, default=224)
-    parser.add_argument(
-        "--show-model-list",
-        help="show model list.",
-        action="store_true",
-    )
-    args = parser.parse_args()
-    return args
 
 
 def get_dummy_input(
@@ -74,25 +59,29 @@ def check_onnx(onnx_path: Path) -> None:
     onnx.checker.check_model(onnx_model)
 
 
-if __name__ == "__main__":
-    args = get_argparser()
-    log.load_config()
-    logging.info(f"Start Convert - Model Name : {args.model_name}")
-
-    if args.show_model_list:
+@hydra.main(
+    config_path="../configs",
+    config_name="torch2onnx",
+)
+def main(cfg: DictConfig) -> None:
+    if cfg.general.show_model_list:
         show_model_list()
         exit()
-    else:
-        out_p = Path(OUT_DIR_PATH) / f"{args.model_name}.onnx"
-        out_p.parent.mkdir(parents=True, exist_ok=True)
-        dummy_input = get_dummy_input(
-            args.input_batch, args.input_color, args.input_height, args.input_width
-        )
-        model = timm.create_model(args.model_name, pretrained=True)
-        torch2onnx(
-            model=model,
-            dummy_input=dummy_input,
-            output_path=out_p,
-        )
-        check_onnx(out_p)
-        exit()
+
+    logging.info(f"Start Convert - Model Name : {cfg.timm.model_name}")
+
+    out_p = Path(OUT_DIR_PATH) / f"{cfg.timm.model_name}.onnx"
+    out_p.parent.mkdir(parents=True, exist_ok=True)
+    dummy_input = get_dummy_input(1, 3, *cfg.timm.input_shape)
+    model = timm.create_model(cfg.timm.model_name, pretrained=True)
+    torch2onnx(
+        model=model,
+        dummy_input=dummy_input,
+        output_path=out_p,
+    )
+    check_onnx(out_p)
+    logging.info(f"Complete Convert")
+
+
+if __name__ == "__main__":
+    main()

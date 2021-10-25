@@ -1,0 +1,8 @@
+defaults:
+  - _self_
+  - hydra: default
+  - override hydra/hydra_logging: none
+
+general:
+  onnx_path: MISSING
+  fp16: False

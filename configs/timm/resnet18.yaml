@@ -1,3 +1,4 @@
 input_shape: [224, 224]
-engine_path: ../trt_engine/resnet18.engine
+model_name: resnet18
 classes_num: 1000
+engine_path: ../trt_engine/${.model_name}.engine

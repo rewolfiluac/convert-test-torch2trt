@@ -46,8 +46,6 @@ def postprocess(
 
 @hydra.main(config_path="../configs", config_name="u2net")
 def main(cfg: DictConfig) -> None:
-    log.load_config()
-
     fix_seed(cfg.general.seed)
     is_portrait = True if cfg.u2net.mode == "portrait" else False
     engine_path = Path(cfg.u2net.engine_path)
