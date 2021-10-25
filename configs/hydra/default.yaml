@@ -15,4 +15,4 @@ job_logging:
   root:
     level: INFO
     handlers: [console]
-  disable_existing_loggers: False
+  disable_existing_loggers: True
