@@ -30,8 +30,7 @@ bash download.sh
 ```
 
 ## inference demo u2net (salient object detection)
-<img src="./images/bird.jpg" width="100">
-<img src="./images/bird_salient.jpg" width="100">
+<img src="./images/bird.jpg" width="100"><img src="./images/bird_salient.jpg" width="100">
 
 ```bash
 cd {repository root}/src
@@ -43,8 +42,7 @@ python inference_u2net.py u2net=salient general.image_path=../images/bird.jpg
 ```
 
 ## inference demo u2net (portrait)
-<img src="./images/bird.jpg" width="100">
-<img src="./images/bird_portrait.jpg" width="100">
+<img src="./images/bird.jpg" width="100"><img src="./images/bird_portrait.jpg" width="100">
 
 ```bash
 cd {repository root}/src
