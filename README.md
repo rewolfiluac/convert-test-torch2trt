@@ -53,6 +53,18 @@ python inference_u2net.py u2net=portrait general.image_path=../images/bird.jpg
 # output image to ../images_out/{bird.jpg}
 ```
 
+## inference demo u2net (human segmentation)
+<img src="./images/human.jpg" width="256"><img src="./images/human_seg.jpg" width="256">
+
+```bash
+cd {repository root}/src
+# convert onnx to tensorrt
+python onnx2trt.py general.onnx_path=../onnx_model/u2net/u2net_human_seg_1_3_320_320.onnx
+# inference
+python inference_u2net.py u2net=human_seg general.image_path=../images/human.jpg
+# output image to ../images_out/{bird.jpg}
+```
+
 # Command Option
 ## onnx2trt
 ```bash
