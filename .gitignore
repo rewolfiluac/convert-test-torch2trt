@@ -1,13 +1,17 @@
 .env
 .mypy_cache
 __pycache__
+tmp
 
 # generate file
 model_list
+*.log
+*.onnx
+*.engine
 
 # generate folder
-onnx_model
 trt_engine
+images_out
 
 # python
 *.pyc

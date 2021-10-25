@@ -1,0 +1,3 @@
+mode: salient
+input_shape: [320, 320]
+engine_path: ../trt_engine/u2net_salient_1_3_320_320.engine

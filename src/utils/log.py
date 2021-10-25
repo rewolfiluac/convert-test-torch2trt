@@ -14,8 +14,8 @@ def load_config() -> None:
 
 def start_end_log(func: Callable) -> Callable:
     def wrapper(*args: Any, **kwargs: Any) -> None:
-        logging.info(f"{func.__name__} --- start.")
+        logging.debug(f"{func.__name__} --- start.")
         func(*args, **kwargs)
-        logging.info(f"{func.__name__} --- done.")
+        logging.debug(f"{func.__name__} --- done.")
 
     return wrapper
