@@ -1,4 +1,4 @@
-# convert-test-torch2trt
+# convert-torch2trt-demo
 
 ## Startup docker container
 ```
