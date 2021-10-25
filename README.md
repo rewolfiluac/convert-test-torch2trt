@@ -6,39 +6,40 @@ bash make_env.sh
 docker-compose up -d --build 
 ```
 
+# Demo: Inference timm model
 ## show timm model list 
 ```bash
-cd src
+cd {repository root}/src
 bash export_model_list_timm.sh
 ```
-
-## torch2trt from timm model
+## inference demo resnet18
 ```bash
-python torch2onnx_timm.py --model-name {model_name}
+cd {repository root}/src
+# convert torch to onnx
+python torch2onnx_timm.py --model-name resnet18
+# convert onnx to tensorrt
+python onnx2trt.py --onnx-path "../onnx_model/resnet18.onnx"
+python inference_timm.py general.image_path=../images/bird.jpg
 ```
-
+# Demo: Inference demo U^2-Net
 ## download u2net onnx model
 ```bash
-
+cd {repository root}/onnx_model/u2net
+bash download.sh
 ```
 
+## inference demo u2net (salient object detection)
+```bash
+cd {repository root}/src
+# convert onnx to tensorrt
+python onnx2trt.py --onnx-path ../onnx_model/u2net/u2net_salient_1_3_320_320.onnx
+# inference
+python inference_u2net.py u2net=salient general.image_path=../images/bird.jpg
+# output image to ../images_out/{bird.jpg}
+```
+
+# Command Option
 ## onnx2trt
 ```bash
 python onnx2trt.py --onnx-path {your/onnx/path} {option: --fp16}
-```
-
-## inference demo imagenet
-```bash
-python inference_timm.py
-# inference your image
-python inference_timm.py general.image_path={your/image/path}
-```
-## inference demo u2net
-```bash
-# u^2-net for portrait
-python inference_u2net.py
-# (option) u^2-net for salient object detection
-python inference_u2net.py u2net=salient
-# u^2-net inference your image
-python inference_u2net.py general.image_path={your/image/path}
 ```
