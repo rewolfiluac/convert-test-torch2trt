@@ -58,3 +58,8 @@ python inference_u2net.py u2net=portrait general.image_path=../images/bird.jpg
 ```bash
 python onnx2trt.py --onnx-path {your/onnx/path} {option: --fp16}
 ```
+
+
+# Reference
+TensorRT: https://github.com/NVIDIA/TensorRT<br>
+U^2-Net: https://github.com/xuebinqin/U-2-Net<br>
