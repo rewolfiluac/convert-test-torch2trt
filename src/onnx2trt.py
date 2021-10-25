@@ -37,8 +37,8 @@ if __name__ == "__main__":
 
     # build engine
     engine = build_engine(onnx_path=onnx_path, fp16=args.fp16)
-    logging.debug("Complete build.")
+    logging.info("Complete build.")
     # write engine file
     with open(str(trt_path), "wb") as f:
         f.write(bytearray(engine.serialize()))
-    logging.debug("Complete write engine.")
+    logging.info("Complete write engine.")
