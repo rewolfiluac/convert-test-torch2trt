@@ -35,6 +35,7 @@ bash download.sh
 
 ```bash
 cd {repository root}/src
+# convert torch to onnx in the official U^2-Net repository.
 # convert onnx to tensorrt
 python onnx2trt.py general.onnx_path=../onnx_model/u2net/u2net_salient_1_3_320_320.onnx
 # inference
@@ -47,6 +48,7 @@ python inference_u2net.py u2net=salient general.image_path=../images/bird.jpg
 
 ```bash
 cd {repository root}/src
+# convert torch to onnx in the official U^2-Net repository.
 # convert onnx to tensorrt
 python onnx2trt.py general.onnx_path=../onnx_model/u2net/u2net_portrait_1_3_512_512.onnx
 # inference
@@ -59,6 +61,7 @@ python inference_u2net.py u2net=portrait general.image_path=../images/bird.jpg
 
 ```bash
 cd {repository root}/src
+# convert torch to onnx in the official U^2-Net repository.
 # convert onnx to tensorrt
 python onnx2trt.py general.onnx_path=../onnx_model/u2net/u2net_human_seg_1_3_320_320.onnx
 # inference
@@ -78,6 +81,7 @@ bash download.sh
 
 ```bash
 cd {repository root}/src
+# convert torch to onnx in the mmdetection repository.
 # convert onnx to tensorrt
 python onnx2trt.py general.onnx_path=../onnx_model/yolo/yolov3_d53_mstrain-608_273e_coco.onnx rm_blow_nms=yolov3_d58
 # inference
