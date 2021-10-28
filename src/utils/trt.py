@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, List
+import ctypes
 
 import numpy as np
 import pycuda.autoinit
@@ -10,6 +11,8 @@ import tensorrt as trt
 # TRT_LOGGER = trt.Logger(trt.Logger.VERBOSE)
 TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
 EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+
+trt.init_libnvinfer_plugins(TRT_LOGGER, "")
 
 
 def GiB(val: int) -> int:

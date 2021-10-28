@@ -37,10 +37,8 @@ def mask_portrait(
 def norm_hist(img: np.ndarray) -> np.ndarray:
     # histgram normalization
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-    lab_planes = list(cv2.split(lab))
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    lab_planes[0] = clahe.apply(lab_planes[0])
-    lab = cv2.merge(lab_planes)
+    lab[:, :, 0] = clahe.apply(lab[:, :, 0])
     img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
     return img
 

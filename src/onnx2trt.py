@@ -1,9 +1,13 @@
 from pathlib import Path
 import logging
 
+import numpy as np
 import hydra
 from omegaconf import DictConfig, OmegaConf
+import onnx
+import onnx_graphsurgeon as gs
 
+from utils.onnx import remove_node_below_nms
 from utils.trt import build_engine
 from utils import log
 
@@ -30,8 +34,17 @@ def main(cfg: DictConfig) -> None:
     if not onnx_path.is_file():
         raise Exception(f"File Not Found. {str(onnx_path)}")
 
+    out_onnx_path = onnx_path.parent / f"{onnx_path.stem}_optim.onnx"
+    raw_onnx = onnx.load(str(onnx_path))
+
+    if "rm_blow_nms" in cfg.keys():
+        raw_onnx = remove_node_below_nms(raw_onnx, cfg.rm_blow_nms.target)
+
+    onnx.checker.check_model(raw_onnx)
+    onnx.save(raw_onnx, str(out_onnx_path))
+
     # build engine
-    engine = build_engine(onnx_path=onnx_path, fp16=cfg.general.fp16)
+    engine = build_engine(onnx_path=out_onnx_path, fp16=cfg.general.fp16)
     logging.info("Complete build.")
     # write engine file
     with open(str(trt_path), "wb") as f:
