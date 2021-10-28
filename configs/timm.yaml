@@ -2,7 +2,7 @@ defaults:
   - _self_
   - hydra: default
   - timm: resnet18
-  - override hydra/hydra_logging: none
+  - override hydra/job_logging: custom
 
 general:
   seed: 0
