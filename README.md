@@ -67,13 +67,13 @@ python inference_u2net.py u2net=human_seg general.image_path=../images/human.jpg
 ```
 
 
-# Demo: Inference demo U^2-Net
+# Demo: Inference demo YOLOv3
 ## download yolo onnx model
 ```bash
 cd {repository root}/onnx_model/yolo
 bash download.sh
 ```
-## inference demo YOLOv3 (COCO segmentation)
+## inference demo YOLOv3 (coco object detection)
 <img src="./images/human.jpg" width="256"><img src="./images/human_yolov3_det.jpg" width="256">
 
 ```bash
