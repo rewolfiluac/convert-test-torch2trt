@@ -91,7 +91,7 @@ def main(cfg: DictConfig) -> None:
     )
     logging.info(f"2nd postprocess time: {time.time() - start} [sec]")
 
-    # Show BBox
+    # Draw BBox
     out_img = img.copy()
     org_h, org_w = out_img.shape[:2]
     # Padding分の計算を加える
@@ -99,14 +99,9 @@ def main(cfg: DictConfig) -> None:
     line_size = line_size // 100
 
     tblr = calc_pad_size(*out_img.shape[:2])
-    pad_img = pad(out_img, tblr)
-    pad_h, pad_w = pad_img.shape[:2]
-    # out_img = cv2.resize(out_img, cfg.yolo.input_shape[:2])
+    pad_h, pad_w = pad(out_img, tblr).shape[:2]
 
     # normalize bbox for padding and resize
-    # h_ratio, w_ratio = 1.0, 1.0
-    # h_pad_diff, w_pad_diff = 0.0, 0.0
-
     h_ratio = pad_h / (cfg.yolo.input_shape[0])
     w_ratio = pad_w / (cfg.yolo.input_shape[1])
     h_pad_diff = tblr[0]
