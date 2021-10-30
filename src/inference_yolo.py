@@ -8,11 +8,10 @@ from omegaconf import DictConfig, OmegaConf
 import numpy as np
 import cv2
 
-from img_proc.padding import calc_pad_size, pad
 from img_proc.np import preprocess
 from utils.onnx import nms_postprocess
 from utils import log
-from utils.util import fix_seed, draw_bbox
+from img_proc.bbox import BBox, draw_bboxs, correct_bbox
 from utils.trt import (
     load_engine,
     allocate_buffers,
@@ -26,7 +25,6 @@ OUTPUT_DIR = "../images_out"
 
 @hydra.main(config_path="../configs", config_name="yolo")
 def main(cfg: DictConfig) -> None:
-    fix_seed(cfg.general.seed)
     engine_path = Path(cfg.yolo.engine_path)
     img_path = Path(cfg.general.image_path)
     out_dir_path = Path(OUTPUT_DIR)
@@ -34,10 +32,12 @@ def main(cfg: DictConfig) -> None:
     if not engine_path.is_file():
         raise Exception(f"File Not Found. {str(engine_path)}")
 
+    # prepare tensorrt
     engine = load_engine(engine_path)
     context = engine.create_execution_context()
     inputs, outputs, bindings, stream = allocate_buffers(engine)
 
+    # prepare intput data
     img = cv2.imread(str(img_path))
     input_data = preprocess(
         img,
@@ -91,37 +91,18 @@ def main(cfg: DictConfig) -> None:
     )
     logging.info(f"2nd postprocess time: {time.time() - start} [sec]")
 
-    # Draw BBox
+    # prepare output
     out_img = img.copy()
-    org_h, org_w = out_img.shape[:2]
-    # Padding分の計算を加える
-    line_size = org_h if org_h < org_w else org_w
-    line_size = line_size // 100
 
-    tblr = calc_pad_size(*out_img.shape[:2])
-    pad_h, pad_w = pad(out_img, tblr).shape[:2]
-
-    # normalize bbox for padding and resize
-    h_ratio = pad_h / (cfg.yolo.input_shape[0])
-    w_ratio = pad_w / (cfg.yolo.input_shape[1])
-    h_pad_diff = tblr[0]
-    w_pad_diff = tblr[2]
-
-    for box, cls_idx in zip(out_boxes[0], out_classes):
-        _box = [
-            int(box[0] * w_ratio - w_pad_diff),
-            int(box[1] * h_ratio - h_pad_diff),
-            int(box[2] * w_ratio - w_pad_diff),
-            int(box[3] * h_ratio - h_pad_diff),
-        ]
-        draw_bbox(
-            out_img,
-            _box,
-            COCO_CLS_LABELS[cls_idx + 1],
-            text_scale=0.5,
-            thickness=3,
-        )
-
+    bboxes = correct_bbox(
+        out_img, out_boxes[0], cfg.yolo.input_shape[0], cfg.yolo.input_shape[1]
+    )
+    draw_bboxs(
+        out_img,
+        COCO_CLS_LABELS,
+        bboxes,
+        out_classes.tolist(),
+    )
     # save image
     cv2.imwrite(str(out_dir_path / img_path.name), out_img)
 
