@@ -8,16 +8,18 @@ from omegaconf import DictConfig, OmegaConf
 import numpy as np
 import cv2
 
+from img_proc.padding import calc_pad_size, pad
 from img_proc.np import preprocess
+from utils.onnx import nms_postprocess
 from utils import log
-from utils.util import fix_seed
+from utils.util import fix_seed, draw_bbox
 from utils.trt import (
     load_engine,
     allocate_buffers,
     do_inference_v2,
     load_data,
 )
-from consts.imagenet_labels import IMAGENET_LABELS
+from consts.coco_labels import COCO_CLS_LABELS
 
 OUTPUT_DIR = "../images_out"
 
@@ -40,6 +42,7 @@ def main(cfg: DictConfig) -> None:
     input_data = preprocess(
         img,
         cfg.yolo.input_shape,
+        padding=cfg.yolo.input_padding,
         mean=cfg.yolo.normalize.mean,
         std=cfg.yolo.normalize.std,
     )
@@ -60,6 +63,7 @@ def main(cfg: DictConfig) -> None:
     input_data = preprocess(
         img,
         cfg.yolo.input_shape,
+        padding=cfg.yolo.input_padding,
         mean=cfg.yolo.normalize.mean,
         std=cfg.yolo.normalize.std,
     )
@@ -79,36 +83,48 @@ def main(cfg: DictConfig) -> None:
 
     # postprocess
     start = time.time()
-    boxes = ret[0].reshape((1, -1, 4))
-    scores = ret[1].reshape((1, 80, -1))
-    selected_indices = ret[2].reshape((1, -1, 3))
-
-    boxes_selected = np.take(boxes, selected_indices[0, :, 2], axis=1)
-    scores_selected = scores[0, selected_indices[0, :, 1], selected_indices[0, :, 2]]
-    idxs = list(zip(*np.where(scores_selected > cfg.yolo.score_thr)))
-    selected_box_indices = selected_indices[:, idxs, 2]
-    show_boxes = np.take(
-        boxes, selected_box_indices.reshape(selected_box_indices.shape[:2]), axis=1
+    out_boxes, out_classes = nms_postprocess(
+        ret[0],
+        ret[1],
+        ret[2],
+        score_thr=cfg.yolo.score_thr,
     )
     logging.info(f"2nd postprocess time: {time.time() - start} [sec]")
 
     # Show BBox
-    org_h, org_w = img.shape[:2]
+    out_img = img.copy()
+    org_h, org_w = out_img.shape[:2]
+    # Padding分の計算を加える
     line_size = org_h if org_h < org_w else org_w
     line_size = line_size // 100
-    h_ratio = org_h / cfg.yolo.input_shape[0]
-    w_ratio = org_w / cfg.yolo.input_shape[0]
 
-    out_img = img.copy()
-    for box in show_boxes[0, 0]:
-        cv2.rectangle(
+    tblr = calc_pad_size(*out_img.shape[:2])
+    pad_img = pad(out_img, tblr)
+    pad_h, pad_w = pad_img.shape[:2]
+    # out_img = cv2.resize(out_img, cfg.yolo.input_shape[:2])
+
+    # normalize bbox for padding and resize
+    # h_ratio, w_ratio = 1.0, 1.0
+    # h_pad_diff, w_pad_diff = 0.0, 0.0
+
+    h_ratio = pad_h / (cfg.yolo.input_shape[0])
+    w_ratio = pad_w / (cfg.yolo.input_shape[1])
+    h_pad_diff = tblr[0]
+    w_pad_diff = tblr[2]
+
+    for box, cls_idx in zip(out_boxes[0], out_classes):
+        _box = [
+            int(box[0] * w_ratio - w_pad_diff),
+            int(box[1] * h_ratio - h_pad_diff),
+            int(box[2] * w_ratio - w_pad_diff),
+            int(box[3] * h_ratio - h_pad_diff),
+        ]
+        draw_bbox(
             out_img,
-            pt1=(int(box[0] * w_ratio), int(box[1] * h_ratio)),
-            pt2=(int(box[2] * w_ratio), int(box[3] * h_ratio)),
-            color=(0, 255, 0),
-            thickness=line_size,
-            # lineType=cv2.LINE_4,
-            shift=0,
+            _box,
+            COCO_CLS_LABELS[cls_idx + 1],
+            text_scale=0.5,
+            thickness=3,
         )
 
     # save image

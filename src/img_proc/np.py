@@ -3,14 +3,21 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 
+from img_proc.padding import calc_pad_size, pad
+
 
 def preprocess(
     input_data: np.ndarray,
     resize_shape: Tuple[int, int],
+    padding: bool = False,
     devide_max: bool = False,
     mean: List[float] = [0.485, 0.456, 0.406],
     std: List[float] = [0.229, 0.224, 0.225],
 ) -> np.ndarray:
+    h, w = input_data.shape[:2]
+    if padding and h != w:
+        tblr = calc_pad_size(h, w)
+        input_data = pad(input_data, tblr)
     input_data = cv2.resize(input_data, resize_shape)
     # imagenet color RGB, not BGR.
     input_data = input_data[:, :, ::-1]

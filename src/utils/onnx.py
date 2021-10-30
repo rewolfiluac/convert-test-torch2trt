@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Tuple
 
 import numpy as np
 import onnx
@@ -24,3 +24,34 @@ def remove_node_below_nms(onnx_graph: onnx.ModelProto, target: str) -> onnx.Mode
     graph.cleanup()
     out_onnx = gs.export_onnx(graph)
     return out_onnx
+
+
+def nms_postprocess(
+    boxes: np.ndarray,
+    scores: np.ndarray,
+    selected_indices: np.ndarray,
+    score_thr: float,
+) -> Tuple[np.ndarray, np.ndarray]:
+    # boxes shape is [num_batches, spatial_dimension, 4].
+    boxes = boxes.reshape((1, -1, 4))
+    # scores shape is [num_batches, num_classes, spatial_dimension].
+    scores = scores.reshape((1, 80, -1))
+    # selected_indices format is [batch_index, class_index, box_index].
+    # shape is [select_num, 3]
+    selected_indices = selected_indices.reshape((1, -1, 3))
+
+    batch_size = boxes.shape[0]
+
+    boxes_selected = np.take(boxes, selected_indices[:, :, 2], axis=1)
+    boxes_selected = boxes_selected.reshape(
+        (boxes.shape[0], *boxes_selected.shape[-2:])
+    )
+    scores_selected = scores[
+        :, selected_indices[:, :, 1], selected_indices[:, :, 2]
+    ].reshape(batch_size, -1)
+    idxs = np.where(scores_selected > score_thr)
+    selected_box_indices = selected_indices[idxs[0], idxs[1], 2]
+    selected_cls_indices = selected_indices[idxs[0], idxs[1], 1]
+    out_boxes = boxes[:, selected_box_indices]
+    out_classes = selected_cls_indices
+    return out_boxes, out_classes
