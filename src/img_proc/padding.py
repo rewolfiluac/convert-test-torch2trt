@@ -1,5 +1,6 @@
 from typing import List, Tuple
 from dataclasses import dataclass
+import time
 
 import cv2
 import numpy as np
