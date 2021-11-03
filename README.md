@@ -1,6 +1,6 @@
 # convert-torch2trt-demo
 
-## Startup docker container
+## startup docker container
 ```
 bash make_env.sh
 docker-compose up -d --build 
