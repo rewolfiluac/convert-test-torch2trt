@@ -3,6 +3,12 @@ FROM nvcr.io/nvidia/tensorrt:21.09-py3
 ARG UID
 ARG GID
 
+# install package
+RUN apt-get update && \
+    apt-get -y install sudo libpcre3 libpcre3-dev python3-dev python3.8-dev && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # install python package
 RUN pip install --upgrade pip && \
     pip install --upgrade pyyaml==6.0 types-PyYAML==5.4.12 && \
@@ -18,6 +24,13 @@ RUN pip install --upgrade pip && \
     pip cache purge && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
+
+# install swig
+RUN wget https://prdownloads.sourceforge.net/swig/swig-4.0.2.tar.gz
+RUN tar xvzf swig-4.0.2.tar.gz
+WORKDIR swig-4.0.2
+RUN ./configure
+RUN make && sudo make install
 
 # create user who can sudo
 ENV USER dev

@@ -6,6 +6,12 @@ bash make_env.sh
 docker-compose up -d --build 
 ```
 
+# prepare build
+```
+cd {repository root}/src
+bash build.sh
+```
+
 # Demo: Inference timm model
 ## show timm model list 
 ```bash
