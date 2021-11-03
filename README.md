@@ -6,7 +6,7 @@ bash make_env.sh
 docker-compose up -d --build 
 ```
 
-# prepare build
+## prepare build
 ```
 cd {repository root}/src
 bash build.sh
