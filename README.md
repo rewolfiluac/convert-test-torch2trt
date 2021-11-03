@@ -1,9 +1,15 @@
 # convert-torch2trt-demo
 
-## Startup docker container
+## startup docker container
 ```
 bash make_env.sh
 docker-compose up -d --build 
+```
+
+# prepare build
+```
+cd {repository root}/src
+bash build.sh
 ```
 
 # Demo: Inference timm model
